@@ -1,17 +1,18 @@
 <template>
-  <main>
+  <div>
     <px-header></px-header>
-    <px-assets-table></px-assets-table>
-  </main>
+    <router-view
+      class="container px-5 sm:px-20 py-20 flex justify-center"
+    ></router-view>
+  </div>
 </template>
 
 <script>
 import PxHeader from "@/components/PxHeader";
-import PxAssetsTable from "@/components/PxAssetsTable";
 
 export default {
   name: "App",
-  components: { PxHeader, PxAssetsTable },
+  components: { PxHeader },
 };
 </script>
 
@@ -22,6 +23,5 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
 }
 </style>
