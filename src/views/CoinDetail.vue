@@ -93,21 +93,51 @@
         :max="max"
         :data="getAssetHistoryChartFormat()"
       />
+      <h3 class="text-xl my-10">Mejores Ofertas de Cambio</h3>
+      <table>
+        <tr
+          class="border-b"
+          v-for="market in markets"
+          :key="`${market.exchangeId}-${market.priceUsd}`"
+        >
+          <td>
+            <b>{{ market.exchangeId }}</b>
+          </td>
+          <td>{{ market.priceUsd | dollar }}</td>
+          <td>{{ market.baseSymbol }} / {{ market.quoteSymbol }}</td>
+          <td>
+            <px-button
+              v-if="!market.url"
+              :is-loading="market.isLoading || false"
+              @click="handleButtonClick(market)"
+            >
+              <slot>Obtener Link</slot>
+            </px-button>
+            <a v-else class="hover:underline text-green-600" target="_blank">{{
+              market.url
+            }}</a>
+          </td>
+        </tr>
+      </table>
     </template>
   </div>
 </template>
 
 <script>
 import api from '@/api'
+import PxButton from '@/components/PxButton'
 
 export default {
   name: 'CoinDetail',
 
-  data() {
+  components: { PxButton },
+
+  data: () => {
     return {
       isLoading: false,
       asset: {},
       assetHistory: [],
+      markets: [],
     }
   },
 
@@ -132,19 +162,20 @@ export default {
     },
   },
 
-  created() {
-    this.getCoin()
-  },
-
   methods: {
     getCoin() {
       this.isLoading = true
       const id = this.$route.params.id
 
-      Promise.all([api.getAsset(id), api.getAssetHistory(id)])
-        .then(([asset, assetHistory]) => {
+      Promise.all([
+        api.getAsset(id),
+        api.getAssetHistory(id),
+        api.getMarkets(id),
+      ])
+        .then(([asset, assetHistory, markets]) => {
           this.asset = asset
           this.assetHistory = assetHistory
+          this.markets = markets
         })
         .finally(() => (this.isLoading = false))
     },
@@ -154,6 +185,17 @@ export default {
         parseFloat(h.priceUsd).toFixed(2),
       ])
     },
+    handleButtonClick(exchange) {
+      this.$set(exchange, 'isLoading', true)
+      return api.getExchange(exchange.exchangeId).then((res) => {
+        this.$set(exchange, 'url', res.exchangeUrl)
+        this.$set(exchange, 'isLoading', false)
+      })
+    },
+  },
+
+  created() {
+    this.getCoin()
   },
 }
 </script>
