@@ -48,6 +48,7 @@
 
         <div class="my-10 sm:mt-0 flex flex-col justify-center text-center">
           <button
+            @click="toggleConverter"
             class="
               bg-green-500
               hover:bg-green-700
@@ -58,12 +59,14 @@
               rounded
             "
           >
-            Cambiar
+            {{ fromUsd ? `USD a ${asset.symbol}` : `${asset.symbol} a USD` }}
           </button>
 
           <div class="flex flex-row my-5">
             <label class="w-full" for="convertValue">
               <input
+                v-model="convertValue"
+                :placeholder="`Valor en ${fromUsd ? 'USD' : asset.symbol}`"
                 id="convertValue"
                 type="number"
                 class="
@@ -83,7 +86,9 @@
             </label>
           </div>
 
-          <span class="text-xl"></span>
+          <span class="text-xl">
+            {{ convertedResult }} {{ fromUsd ? asset.symbol : 'USD' }}</span
+          >
         </div>
       </div>
       <line-chart
@@ -138,10 +143,23 @@ export default {
       asset: {},
       assetHistory: [],
       markets: [],
+      fromUsd: true,
+      convertValue: null,
     }
   },
 
   computed: {
+    convertedResult() {
+      if (!this.convertValue) {
+        return 0
+      }
+      const result = this.fromUsd
+        ? parseFloat(this.convertValue) / parseFloat(this.asset.priceUsd)
+        : parseFloat(this.convertValue) * parseFloat(this.asset.priceUsd)
+
+      return result.toFixed(4)
+    },
+
     min() {
       return Math.min(
         ...this.assetHistory.map((h) => parseFloat(h.priceUsd).toFixed(2))
@@ -163,6 +181,9 @@ export default {
   },
 
   methods: {
+    toggleConverter() {
+      this.fromUsd = !this.fromUsd
+    },
     getCoin() {
       this.isLoading = true
       const id = this.$route.params.id
@@ -191,6 +212,12 @@ export default {
         this.$set(exchange, 'url', res.exchangeUrl)
         this.$set(exchange, 'isLoading', false)
       })
+    },
+  },
+
+  watch: {
+    $route() {
+      this.getCoin()
     },
   },
 
